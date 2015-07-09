@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import Response
+from flask import request
 from flask import render_template
 
 from firebase import firebase
@@ -37,6 +38,13 @@ app = Flask(__name__)
 
 lastPoll = 0;
 min_time = None
+initUrl = None
+
+@app.route("/initialize")
+def initialize():
+    global initUrl
+    initUrl = request.url
+    return app.send_static_file('initialize.kml')
 
 @app.route("/")
 def start():
@@ -111,46 +119,13 @@ def start():
             "begin": min_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "end": max_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         },
+        targetHref = initUrl,
         when = when,
         coords = coords,
         pids = pids,
         pid_data = pid_data
     )
 
-    kml = """<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
-    <NetworkLinkControl>
-        <LookAt>
-            <longitude>{0}</longitude>
-            <latitude>{1}</latitude>
-            <altitude>100.0</altitude>
-            <gx:TimeSpan id="time_1">
-                <begin>{2}</begin>
-                <end>{3}</end>
-            </gx:TimeSpan>
-            <range>100.0</range>
-        </LookAt>
-        <Update>
-            <targetHref>http://localhost:8000/initialize.kml</targetHref>
-            <Change>
-                <gx:Track targetId="obdtrack">""".format(coords[0][0], coords[0][1], min_time.strftime("%Y-%m-%dT%H:%M:%SZ"), max_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
-    for w in when:
-        kml += "<when>{0}</when>\n".format(w)
-    for c in coords:
-        kml += "<gx:coord>{0} {1} {2}</gx:coord>\n".format(c[0],c[1],c[2])
-    kml += """</gx:Track>
-            </Change>\n"""
-    for pid in pids:
-        kml += """<Change>\n"""
-        kml += """<gx:SimpleArrayData targetId="{0}">\n""".format(pid.replace(" ", "_"))
-        for data in pid_data[pid]:
-            kml += """<gx:value>{0}</gx:value>\n""".format(data)
-        kml += """</gx:SimpleArrayData>\n"""
-        kml += """</Change>\n"""
-    kml += """</Update>
-    </NetworkLinkControl>
-</kml>"""
-    return kml
 
 if __name__ == "__main__":
     app.run(debug=True)

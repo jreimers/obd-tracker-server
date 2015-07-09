@@ -12,7 +12,7 @@
       </gx:TimeSpan>
     </LookAt>
     <Update>
-      <targetHref>http://localhost:8000/initialize.kml</targetHref>
+      <targetHref>{{targetHref}}</targetHref>
       <Change>
         <gx:Track targetId="obdtrack">
         {% for w in when %}
