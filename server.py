@@ -2,7 +2,6 @@ from flask import Flask
 from flask import Response
 from flask import request
 from flask import render_template
-
 from firebase import firebase
 from datetime import datetime
 import config # config.py file
@@ -36,12 +35,9 @@ app = Flask(__name__)
 
 lastPollTimestamp = 0;
 trackStartTime = None
-initializeKmlUrl = None
 
 @app.route("/initialize")
 def initialize():
-    global initializeKmlUrl
-    initializeKmlUrl = request.url
     return app.send_static_file('initialize.kml')
 
 @app.route("/")
@@ -116,12 +112,12 @@ def start():
         lookAt = {
             "lon": coords[0][0],
             "lat": coords[0][1],
-            "alt": 100,
-            "range": 100,
+            "alt": 300,
+            "range": 300,
             "begin": trackStartTime.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "end": trackEndTime.strftime("%Y-%m-%dT%H:%M:%SZ")
         },
-        targetHref = initializeKmlUrl,
+        targetHref = request.url_root + "/initialize",
         when = when,
         coords = coords,
         pids = pids,
