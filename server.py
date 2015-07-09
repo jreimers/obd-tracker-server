@@ -73,17 +73,24 @@ def start():
 
         point = trackPoints[timestamp]
 
-        if(not "gps" in point or not "msg" in point["gps"]):
-            continue
+        if(not "gps" in point or not is_number(point["gps"]["lat"]) or not is_number(point["gps"]["lon"])):
+            continue # bail, bad GPS data
 
-        lat = point["gps"]["msg"]["lat"]
-        lon = point["gps"]["msg"]["lon"]
+        allPidsValid = True
+        for pid in pids:
+            if is_number(point[pid]):
+                pid_data[pid].append(point[pid])
+            else:
+                allPidsValid = False
 
-        if(not is_number(lat) or not is_number(lon)):
-            continue
+        if not allPidsValid:
+            continue # bail, bad PID data
 
-        date = point["gps"]["msg"]["date"] # 230615
-        time = point["gps"]["msg"]["time"] # 22:02:07.000
+        lat = point["gps"]["lat"]
+        lon = point["gps"]["lon"]
+
+        date = point["gps"]["date"] # 230615
+        time = point["gps"]["time"] # 22:02:07.000
 
         gpsTime = datetime.strptime(date + " " + time, "%d%m%y %H:%M:%S.%f")
         if trackStartTime == None:
@@ -100,10 +107,6 @@ def start():
         lat = float(lat[0:2]) + float(lat[2:len(lat)])/60;
         lon = float(lon[0:3]) + float(lon[3:len(lon)])/60;
         coords.append((-lon, lat, 0.0))
-
-        for pid in pids:
-            if("msg" in point[pid]):
-                pid_data[pid].append(point[pid]["msg"])
 
     if len(coords) == 0:
         return "", 304
