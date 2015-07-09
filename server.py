@@ -1,5 +1,7 @@
 from flask import Flask
 from flask import Response
+from flask import render_template
+
 from firebase import firebase
 from datetime import datetime
 import config # config.py file
@@ -24,7 +26,7 @@ def poll_firebase(startAt):
     fb = firebase.FirebaseApplication(config.firebase_url, None)
     try:
         points = fb.get('/', config.firebase_key,  params = { 'orderBy': '"$key"', 'startAt': '"' + str(startAt) + '"' })
-        sorted_keys = sorted(points, key=lambda key: int(key))
+        sorted_keys = sorted(points, key=lambda key: int(key)) # maybe nosql wasn't such a good idea after all
         return sorted_keys,points
     except:
         return [], {}
@@ -99,6 +101,22 @@ def start():
                         pid_data[pid].append(point[pid]["msg"])
     if len(coords) == 0:
         return "", 304
+
+    return render_template("update.kml.tpl",
+        lookAt = {
+            "lon": coords[0][0],
+            "lat": coords[0][1],
+            "alt": 100,
+            "range": 100,
+            "begin": min_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "end": max_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        },
+        when = when,
+        coords = coords,
+        pids = pids,
+        pid_data = pid_data
+    )
+
     kml = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
     <NetworkLinkControl>
